@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { Category } from 'src/common/entities/category.entity';
 
 @Injectable()
 export class CategoriesService {
@@ -59,14 +60,44 @@ export class CategoriesService {
     return result.rows;
   }
 
-  async findOne(id: number) {
-    const result = await this.database.query(
+  async findOne(id: number): Promise<Category | undefined> {
+    const result = await this.database.query<Category>(
       `
     SELECT *
     FROM categories
     WHERE id = $1
     `,
       [id],
+    );
+
+    return result.rows[0];
+  }
+
+  async findOrCreate(name: string, userId: number): Promise<Category> {
+    const normalizedName = name.trim().toLowerCase();
+
+    const existing = await this.database.query<Category>(
+      `
+    SELECT *
+    FROM categories
+    WHERE user_id = $1
+      AND LOWER(TRIM(name)) = $2
+    LIMIT 1
+    `,
+      [userId, normalizedName],
+    );
+
+    if (existing.rows.length > 0) {
+      return existing.rows[0];
+    }
+
+    const result = await this.database.query<Category>(
+      `
+    INSERT INTO categories(name, user_id)
+    VALUES($1, $2)
+    RETURNING *
+    `,
+      [name.trim(), userId],
     );
 
     return result.rows[0];

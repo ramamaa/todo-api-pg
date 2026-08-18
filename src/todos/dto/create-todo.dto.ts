@@ -23,4 +23,8 @@ export class CreateTodoDto {
   @IsOptional()
   @IsInt()
   category_id?: number;
+
+  @IsOptional()
+  @IsString()
+  category_name?: string;
 }

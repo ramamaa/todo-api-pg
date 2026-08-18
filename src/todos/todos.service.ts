@@ -16,32 +16,31 @@ export class TodosService {
   ) {}
 
   async create(dto: CreateTodoDto, userId: number) {
-    if (dto.category_id) {
-      const category = await this.categoriesService.findOne(dto.category_id);
+    let categoryId: number | null = null;
 
-      if (!category) {
-        throw new NotFoundException('Category not found');
-      }
+    if (dto.category_name?.trim()) {
+      const category = await this.categoriesService.findOrCreate(
+        dto.category_name,
+        userId,
+      );
 
-      if (category.user_id !== userId) {
-        throw new ForbiddenException('You cannot use another user category');
-      }
+      categoryId = category.id;
     }
 
     const result = await this.database.query(
       `
-      INSERT INTO todos(
-        title,
-        description,
-        completed,
-        due_date,
-        priority,
-        user_id,
-        category_id
-      )
-      VALUES($1,$2,$3,$4,$5,$6,$7)
-      RETURNING *
-      `,
+    INSERT INTO todos(
+      title,
+      description,
+      completed,
+      due_date,
+      priority,
+      user_id,
+      category_id
+    )
+    VALUES($1,$2,$3,$4,$5,$6,$7)
+    RETURNING *
+    `,
       [
         dto.title,
         dto.description ?? null,
@@ -49,7 +48,7 @@ export class TodosService {
         dto.due_date ?? null,
         dto.priority ?? 'medium',
         userId,
-        dto.category_id ?? null,
+        categoryId,
       ],
     );
 
