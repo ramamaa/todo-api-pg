@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateTodoDto {
   @IsOptional()
@@ -22,6 +22,6 @@ export class UpdateTodoDto {
   priority?: string;
 
   @IsOptional()
-  @IsInt()
-  category_id?: number;
+  @IsString()
+  category_name?: string;
 }

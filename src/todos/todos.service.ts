@@ -154,20 +154,8 @@ export class TodosService {
   async update(id: number, dto: UpdateTodoDto, userId: number) {
     await this.checkTodoOwner(id, userId);
 
-    if (dto.category_id !== undefined && dto.category_id !== null) {
-      const category = await this.categoriesService.findOne(dto.category_id);
-
-      if (!category) {
-        throw new NotFoundException('Category not found');
-      }
-
-      if (category.user_id !== userId) {
-        throw new ForbiddenException('You cannot use another user category');
-      }
-    }
-
     const fields: string[] = [];
-    const values: any[] = [];
+    const values: unknown[] = [];
 
     if (dto.title !== undefined) {
       values.push(dto.title);
@@ -194,9 +182,25 @@ export class TodosService {
       fields.push(`priority = $${values.length}`);
     }
 
-    if (dto.category_id !== undefined) {
-      values.push(dto.category_id);
-      fields.push(`category_id = $${values.length}`);
+    if (dto.category_name !== undefined) {
+      const categoryName = dto.category_name.trim();
+
+      if (categoryName) {
+        const category = await this.categoriesService.findOrCreate(
+          categoryName,
+          userId,
+        );
+
+        fields.push(`category_id = $${values.length + 1}`);
+        values.push(category.id);
+      } else {
+        fields.push(`category_id = NULL`);
+      }
+    }
+
+    // Юу ч update хийх зүйл байхгүй бол
+    if (fields.length === 0) {
+      return this.findOne(id);
     }
 
     fields.push(`updated_at = CURRENT_TIMESTAMP`);

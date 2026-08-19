@@ -74,7 +74,7 @@ export class CategoriesService {
   }
 
   async findOrCreate(name: string, userId: number): Promise<Category> {
-    const normalizedName = name.trim().toLowerCase();
+    const normalizedName = name.trim().replace(/\s+/g, ' ').toLowerCase();
 
     const existing = await this.database.query<Category>(
       `
@@ -97,7 +97,7 @@ export class CategoriesService {
     VALUES($1, $2)
     RETURNING *
     `,
-      [name.trim(), userId],
+      [name.trim().replace(/\s+/g, ' '), userId],
     );
 
     return result.rows[0];
